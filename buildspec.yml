@@ -1,4 +1,6 @@
 version: 0.2
+env:
+  shell: bash
 phases:
   install:
     runtime-versions:
@@ -10,30 +12,30 @@ phases:
       - echo "Retrieving current alias version."
       - |
         set -euo pipefail
-        CURRENT_VERSION=$(aws lambda get-alias \
+        current_version=$(aws lambda get-alias \
           --function-name "$LAMBDA_FUNCTION_NAME" \
           --name live \
           --query 'FunctionVersion' \
-          --output text || true)
-        if [ -z "$CURRENT_VERSION" ] || [ "$CURRENT_VERSION" = "None" ]; then
+          --output text 2>/dev/null || echo "")
+        if [[ -z "$current_version" || "$current_version" == "None" ]]; then
           echo "Alias 'live' not found or missing version; defaulting to 1."
-          CURRENT_VERSION="1"
+          current_version="1"
         fi
-        echo "Current alias version: $CURRENT_VERSION"
+        echo "Current alias version: $current_version"
         echo "Publishing new Lambda function version."
-        TARGET_VERSION=$(aws lambda update-function-code \
+        target_version=$(aws lambda update-function-code \
           --function-name "$LAMBDA_FUNCTION_NAME" \
           --zip-file fileb://lambda.zip \
           --publish \
           --query 'Version' \
           --output text)
-        if [ -z "$TARGET_VERSION" ] || [ "$TARGET_VERSION" = "None" ]; then
+        if [[ -z "$target_version" || "$target_version" == "None" ]]; then
           echo "Failed to determine new Lambda version." >&2
           exit 1
         fi
-        echo "New Lambda version: $TARGET_VERSION"
-        printf 'CURRENT_VERSION=%s\n' "$CURRENT_VERSION" > lambda_versions.env
-        printf 'TARGET_VERSION=%s\n' "$TARGET_VERSION" >> lambda_versions.env
+        echo "New Lambda version: $target_version"
+        printf 'CURRENT_VERSION=%s\n' "$current_version" > lambda_versions.env
+        printf 'TARGET_VERSION=%s\n' "$target_version" >> lambda_versions.env
       - source lambda_versions.env
       - echo "Rendering CodeDeploy AppSpec."
       - |
