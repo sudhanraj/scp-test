@@ -7,6 +7,34 @@ phases:
     commands:
       - echo "Packaging Lambda function source."
       - zip -j lambda.zip src/lambda_function.py
+      - echo "Retrieving current alias version."
+      - |
+        set -euo pipefail
+        CURRENT_VERSION=$(aws lambda get-alias \
+          --function-name "$LAMBDA_FUNCTION_NAME" \
+          --name live \
+          --query 'FunctionVersion' \
+          --output text || true)
+        if [ -z "$CURRENT_VERSION" ] || [ "$CURRENT_VERSION" = "None" ]; then
+          echo "Alias 'live' not found or missing version; defaulting to 1."
+          CURRENT_VERSION="1"
+        fi
+        echo "Current alias version: $CURRENT_VERSION"
+        echo "Publishing new Lambda function version."
+        TARGET_VERSION=$(aws lambda update-function-code \
+          --function-name "$LAMBDA_FUNCTION_NAME" \
+          --zip-file fileb://lambda.zip \
+          --publish \
+          --query 'Version' \
+          --output text)
+        if [ -z "$TARGET_VERSION" ] || [ "$TARGET_VERSION" = "None" ]; then
+          echo "Failed to determine new Lambda version." >&2
+          exit 1
+        fi
+        echo "New Lambda version: $TARGET_VERSION"
+        printf 'CURRENT_VERSION=%s\n' "$CURRENT_VERSION" > lambda_versions.env
+        printf 'TARGET_VERSION=%s\n' "$TARGET_VERSION" >> lambda_versions.env
+      - source lambda_versions.env
       - echo "Rendering CodeDeploy AppSpec."
       - |
         python - <<'PY'
@@ -17,10 +45,13 @@ phases:
         template_path = Path("codedeploy/appspec.yml.template")
         rendered_path = Path("appspec.yml")
         template = template_path.read_text(encoding="utf-8")
-        rendered_path.write_text(
-            template.replace("${LAMBDA_FUNCTION_NAME}", os.environ["LAMBDA_FUNCTION_NAME"]),
-            encoding="utf-8",
+        rendered = (
+            template
+            .replace("${LAMBDA_FUNCTION_NAME}", os.environ["LAMBDA_FUNCTION_NAME"])
+            .replace("${CURRENT_VERSION}", os.environ["CURRENT_VERSION"])
+            .replace("${TARGET_VERSION}", os.environ["TARGET_VERSION"])
         )
+        rendered_path.write_text(rendered, encoding="utf-8")
         PY
 artifacts:
   files:

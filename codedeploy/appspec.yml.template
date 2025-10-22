@@ -5,3 +5,5 @@ Resources:
       Properties:
         Name: ${LAMBDA_FUNCTION_NAME}
         Alias: live
+        CurrentVersion: ${CURRENT_VERSION}
+        TargetVersion: ${TARGET_VERSION}
