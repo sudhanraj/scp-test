@@ -27,7 +27,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         keys = []
         for page in paginator.paginate():
             keys.extend(page.get("Keys", []))
-        logger.info("Discovered %d payment cryptography keys.", len(keys))
+        logger.info("Discovered %d AWS payment cryptography keys.", len(keys))
         return {
             "statusCode": 200,
             "headers": {"Content-Type": "application/json"},
