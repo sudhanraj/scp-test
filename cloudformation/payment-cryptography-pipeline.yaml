@@ -237,6 +237,21 @@ Resources:
             Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSCodeDeployRoleForLambda
+      Policies:
+        - PolicyName: CodeDeployArtifactAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                Resource:
+                  - !Sub '${ArtifactBucket.Arn}/*'
+              - Effect: Allow
+                Action:
+                  - s3:GetBucketLocation
+                Resource: !Sub '${ArtifactBucket.Arn}'
       Tags:
         - Key: Environment
           Value: !Ref EnvironmentName
