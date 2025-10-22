@@ -293,9 +293,17 @@ Resources:
                 Action:
                   - codedeploy:CreateDeployment
                   - codedeploy:GetApplication
+                  - codedeploy:GetApplicationRevision
                   - codedeploy:GetDeploymentGroup
                   - codedeploy:GetDeployment
                   - codedeploy:GetDeploymentConfig
+                  - codedeploy:RegisterApplicationRevision
+                  - codedeploy:BatchGetApplications
+                  - codedeploy:BatchGetDeploymentGroups
+                  - codedeploy:BatchGetDeployments
+                  - codedeploy:ListApplications
+                  - codedeploy:ListDeploymentConfigs
+                  - codedeploy:ListDeploymentGroups
                 Resource: "*"
               - Effect: Allow
                 Action:
