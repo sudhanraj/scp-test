@@ -191,6 +191,12 @@ Resources:
                 Resource: "*"
               - Effect: Allow
                 Action:
+                  - lambda:GetAlias
+                  - lambda:UpdateFunctionCode
+                  - lambda:PublishVersion
+                Resource: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${LambdaFunctionName}'
+              - Effect: Allow
+                Action:
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
                   - logs:PutLogEvents
