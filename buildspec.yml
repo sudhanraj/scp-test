@@ -1,0 +1,28 @@
+version: 0.2
+phases:
+  install:
+    runtime-versions:
+      python: 3.11
+  build:
+    commands:
+      - echo "Packaging Lambda function source."
+      - zip -j lambda.zip src/lambda_function.py
+      - echo "Rendering CodeDeploy AppSpec."
+      - |
+        python - <<'PY'
+        import os
+        from pathlib import Path
+
+
+        template_path = Path("codedeploy/appspec.yml.template")
+        rendered_path = Path("appspec.yml")
+        template = template_path.read_text(encoding="utf-8")
+        rendered_path.write_text(
+            template.replace("${LAMBDA_FUNCTION_NAME}", os.environ["LAMBDA_FUNCTION_NAME"]),
+            encoding="utf-8",
+        )
+        PY
+artifacts:
+  files:
+    - lambda.zip
+    - appspec.yml
